@@ -7,12 +7,12 @@ import { FaTrash } from 'react-icons/fa';
 const Categorie = ({ column, tasks, onAddTask, onDeleteTask, onDeleteCategory, onEditTask }) => {
   return (
     <div className="column" style={{ margin: "0 10px", minWidth: "300px" }}>
-      <h3>
+      <h4>
         {column.title} <Badge pill bg="info">{tasks.length}</Badge>
         <Button variant="outline-danger" size="sm" style={{ float: "right", border: 'none' }} onClick={onDeleteCategory}>
           <FaTrash />
         </Button>
-      </h3>
+      </h4>
       <Droppable droppableId={column.id}>
         {(provided) => (
           <div
@@ -41,7 +41,7 @@ const Categorie = ({ column, tasks, onAddTask, onDeleteTask, onDeleteCategory, o
           </div>
         )}
       </Droppable>
-      <Button variant="primary" onClick={onAddTask} style={{ marginTop: "10px" }}>
+      <Button variant="primary" onClick={onAddTask} style={{ marginTop: "10px" , width: "100%"}}>
         Nouvelle Tâche
       </Button>
     </div>

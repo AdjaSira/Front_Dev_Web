@@ -25,7 +25,16 @@ const initialProjects = {
       weeklyActivity: "5 heures cette semaine"
     }
   },
-  // Ajoutez d'autres projets ici
+ "project-3": {
+    id: "project-3",
+    name: "Projet 3",
+    analysis: {
+      timeSpent: "75 heures",
+      completion: 98,
+      weeklyActivity: "18 heures cette semaine"
+    }
+  },
+  
 };
 
 const Home = () => {

@@ -4,7 +4,8 @@ import { ListGroup } from 'react-bootstrap';
 const ProjectList = ({ onSelectProject }) => {
   const exampleProjects = [
     { id: 'project-1', name: 'Projet 1' },
-    { id: 'project-2', name: 'Projet 2' }
+    { id: 'project-2', name: 'Projet 2' },
+    { id: 'project-3', name: 'Projet 3' }
     // Ajoutez plus de projets ici
   ];
 
