@@ -1,42 +1,204 @@
-import React, { useState } from "react";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { Card, Button, Modal, Form } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { DragDropContext } from "react-beautiful-dnd";
+import { Button, Modal, Form } from "react-bootstrap";
+import Categorie from "./Categorie";
 
-const initialData = {
-  tasks: {
-    "task-1": { id: "task-1", content: "Tâche 1" },
-    "task-2": { id: "task-2", content: "Tâche 2" },
-    "task-3": { id: "task-3", content: "Tâche 3" },
-    "task-4": { id: "task-4", content: "Tâche 4" },
+const initialProjects = {
+  "project-1": {
+    id: "project-1",
+    name: "Projet 1",
+    data: {
+      tasks: {
+        "task-1": { id: "task-1", content: "Tâche 1", description: "Description de la tâche 1", priority: "Normal" },
+        "task-2": { id: "task-2", content: "Tâche 2", description: "Description de la tâche 2", priority: "Important" },
+      },
+      columns: {
+        "column-1": { id: "column-1", title: "À faire", taskIds: ["task-1", "task-2"] },
+        "column-2": { id: "column-2", title: "En cours", taskIds: [] },
+      },
+      columnOrder: ["column-1", "column-2"],
+    }
   },
-  columns: {
-    "column-1": {
-      id: "column-1",
-      title: "À faire",
-      taskIds: ["task-1", "task-2", "task-3", "task-4"],
-    },
-    "column-2": {
-      id: "column-2",
-      title: "En cours",
-      taskIds: [],
-    },
-    "column-3": {
-      id: "column-3",
-      title: "Terminé",
-      taskIds: [],
-    },
+  "project-2": {
+    id: "project-2",
+    name: "Projet 2",
+    data: {
+      tasks: {
+        "task-1": { id: "task-1", content: "Tâche Fatigue", description: "Description de la tâche Fatigue", priority: "Normal" },
+        "task-2": { id: "task-2", content: "Tâche Epuise", description: "Description de la tâche Epuise", priority: "Important" },
+      },
+      columns: {
+        "column-1": { id: "column-1", title: "Mon etat", taskIds: ["task-1", "task-2"] },
+        "column-2": { id: "column-2", title: "En cours", taskIds: [] },
+      },
+      columnOrder: ["column-1", "column-2"],
+    }
   },
-  columnOrder: ["column-1", "column-2", "column-3"],
+  // Ajoutez d'autres projets ici
 };
 
-const KanbanBoard = () => {
-  const [data, setData] = useState(initialData);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
+const KanbanBoard = ({ selectedProjectId }) => {
+  const [projects, setProjects] = useState(initialProjects);
+  const [data, setData] = useState(initialProjects[selectedProjectId].data);
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  const [showAddColumnModal, setShowAddColumnModal] = useState(false);
   const [newTaskContent, setNewTaskContent] = useState("");
+  const [newTaskDescription, setNewTaskDescription] = useState("");
+  const [newTaskPriority, setNewTaskPriority] = useState("Normal");
   const [selectedColumnId, setSelectedColumnId] = useState("");
-  const [currentTask, setCurrentTask] = useState(null);
+  const [newColumnTitle, setNewColumnTitle] = useState("");
+  const [editableTask, setEditableTask] = useState(null);  // To handle task editing
+
+  useEffect(() => {
+    if (selectedProjectId && projects[selectedProjectId]) {
+      setData(projects[selectedProjectId].data);
+    }
+  }, [selectedProjectId, projects]);
+
+  const handleAddTask = () => {
+    const newTaskId = `task-${Object.keys(data.tasks).length + 1}`;
+    const newTask = { id: newTaskId, content: newTaskContent, description: newTaskDescription, priority: newTaskPriority };
+
+    const newTasks = {
+      ...data.tasks,
+      [newTaskId]: newTask,
+    };
+
+    const newTaskIds = Array.from(data.columns[selectedColumnId].taskIds);
+    newTaskIds.push(newTaskId);
+
+    const newColumn = {
+      ...data.columns[selectedColumnId],
+      taskIds: newTaskIds,
+    };
+
+    const newState = {
+      ...data,
+      tasks: newTasks,
+      columns: {
+        ...data.columns,
+        [newColumn.id]: newColumn,
+      },
+    };
+
+    setData(newState);
+    setNewTaskContent("");
+    setNewTaskDescription("");
+    setNewTaskPriority("Normal");
+    setSelectedColumnId("");
+    setShowAddTaskModal(false);
+
+    const updatedProjects = {
+      ...projects,
+      [selectedProjectId]: {
+        ...projects[selectedProjectId],
+        data: newState
+      }
+    };
+    setProjects(updatedProjects);
+  };
+
+  const handleAddColumn = () => {
+    const newColumnId = `column-${Object.keys(data.columns).length + 1}`;
+    const newColumn = {
+      id: newColumnId,
+      title: newColumnTitle,
+      taskIds: [],
+    };
+
+    const newState = {
+      ...data,
+      columns: {
+        ...data.columns,
+        [newColumnId]: newColumn,
+      },
+      columnOrder: [...data.columnOrder, newColumnId],
+    };
+
+    setData(newState);
+    setNewColumnTitle("");
+    setShowAddColumnModal(false);
+
+    const updatedProjects = {
+      ...projects,
+      [selectedProjectId]: {
+        ...projects[selectedProjectId],
+        data: newState
+      }
+    };
+    setProjects(updatedProjects);
+  };
+
+  const handleDeleteTask = (columnId, taskId) => {
+    const newTaskIds = Array.from(data.columns[columnId].taskIds).filter(id => id !== taskId);
+    const newColumn = {
+      ...data.columns[columnId],
+      taskIds: newTaskIds,
+    };
+
+    const newTasks = { ...data.tasks };
+    delete newTasks[taskId];
+
+    const newState = {
+      ...data,
+      tasks: newTasks,
+      columns: {
+        ...data.columns,
+        [columnId]: newColumn,
+      },
+    };
+
+    setData(newState);
+
+    const updatedProjects = {
+      ...projects,
+      [selectedProjectId]: {
+        ...projects[selectedProjectId],
+        data: newState
+      }
+    };
+    setProjects(updatedProjects);
+  };
+
+  const handleDeleteCategory = (columnId) => {
+    const newColumns = { ...data.columns };
+    delete newColumns[columnId];
+
+    const newColumnOrder = data.columnOrder.filter(id => id !== columnId);
+
+    const newState = {
+      ...data,
+      columns: newColumns,
+      columnOrder: newColumnOrder,
+    };
+
+    setData(newState);
+
+    const updatedProjects = {
+      ...projects,
+      [selectedProjectId]: {
+        ...projects[selectedProjectId],
+        data: newState
+      }
+    };
+    setProjects(updatedProjects);
+  };
+
+  const handleEditTask = (taskId, newContent, newDescription, newPriority) => {
+    const newTask = { ...data.tasks[taskId], content: newContent, description: newDescription, priority: newPriority };
+    const newTasks = { ...data.tasks, [taskId]: newTask };
+    const newState = { ...data, tasks: newTasks };
+    setData(newState);
+
+    const updatedProjects = {
+      ...projects,
+      [selectedProjectId]: {
+        ...projects[selectedProjectId],
+        data: newState
+      }
+    };
+    setProjects(updatedProjects);
+  };
 
   const onDragEnd = (result) => {
     const { destination, source, draggableId } = result;
@@ -74,6 +236,16 @@ const KanbanBoard = () => {
       };
 
       setData(newState);
+
+      const updatedProjects = {
+        ...projects,
+        [selectedProjectId]: {
+          ...projects[selectedProjectId],
+          data: newState
+        }
+      };
+      setProjects(updatedProjects);
+
       return;
     }
 
@@ -101,140 +273,71 @@ const KanbanBoard = () => {
     };
 
     setData(newState);
-  };
 
-  const handleAddTask = () => {
-    const newTaskId = `task-${Object.keys(data.tasks).length + 1}`;
-    const newTask = { id: newTaskId, content: newTaskContent };
-
-    const newTasks = {
-      ...data.tasks,
-      [newTaskId]: newTask,
+    const updatedProjects = {
+      ...projects,
+      [selectedProjectId]: {
+        ...projects[selectedProjectId],
+        data: newState
+      }
     };
-
-    const newTaskIds = Array.from(data.columns[selectedColumnId].taskIds);
-    newTaskIds.push(newTaskId);
-
-    const newColumn = {
-      ...data.columns[selectedColumnId],
-      taskIds: newTaskIds,
-    };
-
-    const newState = {
-      ...data,
-      tasks: newTasks,
-      columns: {
-        ...data.columns,
-        [newColumn.id]: newColumn,
-      },
-    };
-
-    setData(newState);
-    setNewTaskContent("");
-    setSelectedColumnId("");
-    setShowAddModal(false);
-  };
-
-  const handleEditTask = () => {
-    const updatedTask = {
-      ...data.tasks[currentTask.id],
-      content: newTaskContent,
-    };
-
-    const newTasks = {
-      ...data.tasks,
-      [currentTask.id]: updatedTask,
-    };
-
-    const newState = {
-      ...data,
-      tasks: newTasks,
-    };
-
-    setData(newState);
-    setCurrentTask(null);
-    setNewTaskContent("");
-    setShowEditModal(false);
-  };
-
-  const openEditModal = (task) => {
-    setCurrentTask(task);
-    setNewTaskContent(task.content);
-    setShowEditModal(true);
-  };
-
-  const openDetailModal = (task) => {
-    setCurrentTask(task);
-    setShowDetailModal(true);
-  };
-
-  const handleColumnChange = (e) => {
-    setSelectedColumnId(e.target.value);
+    setProjects(updatedProjects);
   };
 
   return (
     <>
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="kanban-board">
+        <div className="kanban-board" style={{ display: "flex", overflowX: "auto" }}>
           {data.columnOrder.map((columnId) => {
             const column = data.columns[columnId];
             const tasks = column.taskIds.map((taskId) => data.tasks[taskId]);
 
             return (
-              <div key={column.id} className="column">
-                <h3>{column.title}</h3>
-                <Droppable droppableId={column.id}>
-                  {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className="task-list"
-                    >
-                      {tasks.map((task, index) => (
-                        <Draggable
-                          key={task.id}
-                          draggableId={task.id}
-                          index={index}
-                        >
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className="task-card"
-                              onClick={() => openDetailModal(task)}
-                              onDoubleClick={() => openEditModal(task)}
-                            >
-                              <Card>
-                                <Card.Body>{task.content}</Card.Body>
-                              </Card>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    setSelectedColumnId(column.id);
-                    setShowAddModal(true);
-                  }}
-                >
-                  Nouvelle Tâche
-                </Button>
-              </div>
+              <Categorie
+                key={column.id}
+                column={column}
+                tasks={tasks}
+                onAddTask={() => {
+                  setSelectedColumnId(column.id);
+                  setShowAddTaskModal(true);
+                }}
+                onDeleteTask={handleDeleteTask}
+                onDeleteCategory={() => {
+                  if (window.confirm("Êtes-vous sûr de vouloir supprimer cette catégorie ?")) {
+                    handleDeleteCategory(column.id);
+                  }
+                }}
+                onEditTask={(taskId) => {
+                  setEditableTask(data.tasks[taskId]);
+                  setNewTaskContent(data.tasks[taskId].content);
+                  setNewTaskDescription(data.tasks[taskId].description);
+                  setNewTaskPriority(data.tasks[taskId].priority);
+                  setShowAddTaskModal(true);
+                }}
+              />
             );
           })}
         </div>
       </DragDropContext>
 
-      {/* Modal for Adding Task */}
-      <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
+      <Button
+        variant="success"
+        style={{ position: "fixed", bottom: "20px", right: "20px", borderRadius: "50%" }}
+        onClick={() => setShowAddColumnModal(true)}
+      >
+        +
+      </Button>
+
+      {/* Modal for Adding or Editing Task */}
+      <Modal show={showAddTaskModal} onHide={() => {
+        setShowAddTaskModal(false);
+        setEditableTask(null);
+        setNewTaskContent("");
+        setNewTaskDescription("");
+        setNewTaskPriority("Normal");
+      }}>
         <Modal.Header closeButton>
-          <Modal.Title>Ajouter une nouvelle tâche</Modal.Title>
+          <Modal.Title>{editableTask ? "Modifier la tâche" : "Ajouter une nouvelle tâche"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -247,69 +350,83 @@ const KanbanBoard = () => {
                 onChange={(e) => setNewTaskContent(e.target.value)}
               />
             </Form.Group>
-            <Form.Group controlId="formTaskColumn">
-              <Form.Label>Colonne</Form.Label>
+            <Form.Group controlId="formTaskDescription">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Entrez la description de la tâche"
+                value={newTaskDescription}
+                onChange={(e) => setNewTaskDescription(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group controlId="formTaskPriority">
+              <Form.Label>Priorité</Form.Label>
               <Form.Control
                 as="select"
-                value={selectedColumnId}
-                onChange={handleColumnChange}
+                value={newTaskPriority}
+                onChange={(e) => setNewTaskPriority(e.target.value)}
               >
-                {data.columnOrder.map((columnId) => (
-                  <option key={columnId} value={columnId}>
-                    {data.columns[columnId].title}
-                  </option>
-                ))}
+                <option>Urgent</option>
+                <option>Important</option>
+                <option>Normal</option>
+                <option>Facultative</option>
               </Form.Control>
             </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowAddModal(false)}>
+          <Button variant="secondary" onClick={() => {
+            setShowAddTaskModal(false);
+            setEditableTask(null);
+            setNewTaskContent("");
+            setNewTaskDescription("");
+            setNewTaskPriority("Normal");
+          }}>
             Annuler
           </Button>
-          <Button variant="primary" onClick={handleAddTask}>
-            Ajouter
+          <Button 
+            variant="primary" 
+            onClick={() => {
+              if (editableTask) {
+                handleEditTask(editableTask.id, newTaskContent, newTaskDescription, newTaskPriority);
+              } else {
+                handleAddTask();
+              }
+              setEditableTask(null);
+              setNewTaskContent("");
+              setNewTaskDescription("");
+              setNewTaskPriority("Normal");
+            }}
+          >
+            {editableTask ? "Modifier" : "Ajouter"}
           </Button>
         </Modal.Footer>
       </Modal>
 
-      {/* Modal for Editing Task */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+      {/* Modal for Adding Column */}
+      <Modal show={showAddColumnModal} onHide={() => setShowAddColumnModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Modifier la tâche</Modal.Title>
+          <Modal.Title>Ajouter une nouvelle catégorie</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Form.Group controlId="formEditTaskContent">
-              <Form.Label>Contenu de la tâche</Form.Label>
+            <Form.Group controlId="formColumnTitle">
+              <Form.Label>Titre de la catégorie</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Entrez le nouveau contenu de la tâche"
-                value={newTaskContent}
-                onChange={(e) => setNewTaskContent(e.target.value)}
+                placeholder="Entrez le titre de la catégorie"
+                value={newColumnTitle}
+                onChange={(e) => setNewColumnTitle(e.target.value)}
               />
             </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+          <Button variant="secondary" onClick={() => setShowAddColumnModal(false)}>
             Annuler
           </Button>
-          <Button variant="primary" onClick={handleEditTask}>
-            Enregistrer
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Modal for Task Details */}
-      <Modal show={showDetailModal} onHide={() => setShowDetailModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Détails de la tâche</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>{currentTask && <p>{currentTask.content}</p>}</Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDetailModal(false)}>
-            Fermer
+          <Button variant="primary" onClick={handleAddColumn}>
+            Ajouter
           </Button>
         </Modal.Footer>
       </Modal>
