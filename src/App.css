@@ -55,3 +55,74 @@ button {
 ::-webkit-scrollbar-thumb:hover {
   background: #0056b3;
 }
+
+
+/* CSS pour la barre de progression circulaire */
+.progress-circle {
+    width: 120px; /* Diamètre du cercle */
+    height: 120px; /* Diamètre du cercle */
+    position: relative;
+    display: inline-block;
+  }
+  
+  .progress-circle-inner {
+    width: 100%;
+    height: 100%;
+    background-color: transparent; /* Fond transparent pour la ProgressBar */
+    border-radius: 50%; /* Rend la div circulaire */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden; /* Cache la partie débordante de la bordure */
+  }
+  
+  .progress-circle-inner span {
+    font-size: 24px; /* Taille du texte du pourcentage */
+    font-weight: bold;
+    z-index: 2; /* Place le texte au-dessus de la bordure */
+    color: #000000; /* Couleur du texte en blanc */
+  }
+  
+  /* Pseudo-élément pour la barre de progression */
+  .progress-circle-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      #daedff 0%,
+      #badeff 25%,
+      #9ccfff 50%,
+      #74bcff 75%,
+      #3b9efc 100%
+    ); /* Dégradé de couleurs en fonction du pourcentage */
+    transform: rotate(calc((var(--percent) / 100) * 360deg)); /* Rotation pour indiquer la progression */
+    transform-origin: center;
+    clip-path: polygon(
+      /* Clip path pour masquer la partie non remplie */
+      50% 0%,
+      50% 100%,
+      calc(50% + (50% - var(--percent) * 1%)) 100%, /* Calcul de la position pour masquer la partie non remplie */
+      calc((90% - var(--percent) * 90%)) 10%
+    );
+    border: 4px solid #fff; /* Épaisseur de la bordure de la barre de progression */
+  }
+  
+  /* Clip path pour cacher la partie non colorée */
+  .progress-circle-inner::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #fff; /* Couleur de fond en blanc */
+    clip-path: circle(40%); /* Masque la partie extérieure du cercle */
+  }
+  

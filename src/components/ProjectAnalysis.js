@@ -1,5 +1,6 @@
 import React from 'react';
-import { Card, ProgressBar } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
+import '../App.css'; // Importe le fichier CSS avec les styles
 
 const ProjectAnalysis = ({ analysis }) => {
   return (
@@ -12,9 +13,11 @@ const ProjectAnalysis = ({ analysis }) => {
         </Card.Body>
         <Card.Body>
           <Card.Title>Completion</Card.Title>
-          <Card.Text>
-            <ProgressBar now={analysis.completion} label={`${analysis.completion}%`} />
-          </Card.Text>
+          <div className="progress-circle">
+            <div className="progress-circle-inner" style={{ '--percent': analysis.completion }}>
+              <span>{`${analysis.completion}%`}</span>
+            </div>
+          </div>
         </Card.Body>
         <Card.Body>
           <Card.Title>Activité Hebdomadaire</Card.Title>
